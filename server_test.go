@@ -2,12 +2,13 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"encoding/json"
-	"os"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -61,7 +62,7 @@ func TestGet(t *testing.T) {
 		name string
 		path string
 		expCode int
-		expItems int
+		expitems int
 		expContent string
 	} {
 		{
@@ -74,21 +75,21 @@ func TestGet(t *testing.T) {
 			name: "undefined routes return 404",
 			path: "/todo/500",
 			expCode: http.StatusNotFound,
-			expContent: "ID 500 not found",
+			expContent: "Not Found\n",
 		},
 		{
 			name: "it gets all tasks",
-			path: "todo",
+			path: "/todo",
 			expCode: http.StatusOK,
-			expItems: 2,
-			expContent: "Task number 1.",
+			expitems: 2,
+			expContent: "Task Number 1.",
 		}, 
 		{
 			name: "it can get one task",
 			path: "/todo/1",
 			expCode: http.StatusOK,
-			expItems: 1,
-			expContent: "Task number 1",
+			expitems: 1,
+			expContent: "Task Number 1.",
 		},
 	}
 
@@ -126,8 +127,8 @@ func TestGet(t *testing.T) {
 				if err = json.NewDecoder(r.Body).Decode(&resp); err != nil {
 					t.Error(err)
 				}
-				if resp.TotalResults != tc.expItems {
-					t.Errorf("Expected %d items, got %d.", tc.expItems, resp.TotalResults)
+				if resp.TotalResults != tc.expitems {
+					t.Errorf("Expected %d items, got %d.", tc.expitems, resp.TotalResults)
 				}
 				if resp.Results[0].Task != tc.expContent {
 					t.Errorf("Expected %q, got %q.", tc.expContent, resp.Results[0].Task)
@@ -241,7 +242,7 @@ func TestDelete(t *testing.T) {
 		if len(resp.Results) != 1 {
 			t.Errorf("Expected 1 item, got %d.", len(resp.Results))
 		}
-		expTask := "Task number 2."
+		expTask := "Task Number 2."
 		if resp.Results[0].Task != expTask {
 			t.Errorf("Expected %q, got %q.", expTask, resp.Results[0].Task)
 		}
@@ -294,14 +295,18 @@ func TestComplete(t *testing.T) {
 		}
 	
 		if !resp.Results[0].Done {
-			t.Error("Expected Item 1 to be completed")
+			t.Error("Expected item 1 to be completed")
 		}
 		
 		if resp.Results[1].Done {
-			t.Error("Expected Item 2 not to be completed")
+			t.Error("Expected item 2 not to be completed")
 		}
 	})
 }
-	
+
+func TestMain(m *testing.M) {
+	log.SetOutput(io.Discard)
+	os.Exit(m.Run())
+}
 
 
